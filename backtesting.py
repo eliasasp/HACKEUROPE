@@ -13,21 +13,24 @@ def run_backtest(ys, horizon=24, start=100):
 
     for t in range(start, len(ys) - horizon):
 
-        # 1️ Fit filter on past data only
+        # 1️⃣ Kör filter på historisk data
         lambda_estimates, final_particles = cyber_particle_filter(
             ys[:t],
             npart=500,
-            kappa=0.2,      
+            kappa=0.5,      # viktigt: samma som i testdata
             dt=1.0
         )
 
-        # 2️ Forecast future
+        # 2️⃣ Forecast med samma struktur som filtret använder
+        theta_log = np.log(np.mean(ys[:t]) + 1e-6)
+        sigma = max(np.std(np.log(ys[:t] + 1e-5)), 0.1)
+
         forecaster = ThreatForecaster(
-        kappa=0.2,
-        theta=np.log(10),  
-        sigma=0.3,
-        dt=1.0
-    )
+            kappa=0.5,
+            theta=theta_log,
+            sigma=sigma,
+            dt=1.0
+        )
 
         results = forecaster.simulate(
             log_particles=final_particles,
@@ -37,13 +40,13 @@ def run_backtest(ys, horizon=24, start=100):
 
         attack_paths = results["attack_paths"]
 
-        # 3️ Compare forecast to actual future
+        # 3️⃣ Jämför forecast med verkligt värde
         forecast_mean = np.mean(attack_paths[:, -1])
         actual_value = ys[t + horizon - 1]
 
         errors.append((forecast_mean - actual_value) ** 2)
 
-        # 4️ Coverage test
+        # 4️⃣ Coverage-test
         lower = np.percentile(attack_paths[:, -1], 5)
         upper = np.percentile(attack_paths[:, -1], 95)
 
@@ -64,8 +67,7 @@ def run_backtest(ys, horizon=24, start=100):
 
 if __name__ == "__main__":
 
-    df = pd.read_csv("test_data.csv")
-
+    df = pd.read_csv("testdata.csv")
     ys = df["failed_login"].values
 
     run_backtest(ys, horizon=24, start=100)
