@@ -1,8 +1,6 @@
 import numpy as np
 from scipy.stats import poisson
 
-likelihood = poisson.pmf(k=5, mu=3.2)
-
 def log_ou_transition(x, kappa, theta, sigma, dt, z=None):
     """
     One-step transition of log-intensity.
