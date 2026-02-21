@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import pandas as pd
+
 # Importera din parser och din pipeline!
 from monitor import format_attack_data
 from main import run_cyber_risk_pipeline  # Byt ut 'main' mot vad filen faktiskt heter

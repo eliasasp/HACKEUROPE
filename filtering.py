@@ -3,9 +3,6 @@ from scipy.stats import poisson
 import pandas as pd
 from model import log_ou_transition, log_to_intensity, poisson_likelihood
 
-df = pd.read_csv('synthetic_ai_attack_timeseries.csv')
-# Hämta bara de senaste 720 timmarna (30 dagar) för snabb och relevant analys
-ys = df['attack_count'].tail(720).values
 
 def cyber_particle_filter(ys, npart, kappa = 0.25, dt = 1.0):
     n = len(ys)
