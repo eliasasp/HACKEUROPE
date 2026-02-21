@@ -17,7 +17,7 @@ def run_cyber_risk_pipeline(csv_path):
     ys = df['attack_count'].tail(720).values
     
     # 2. DATADRIVEN KALIBRERING (Låter datan styra parametrarna)
-    theta_val = np.mean(ys)
+    theta_val = np.log(np.mean(ys) + 1e-6)
     raw_sigma = np.std(np.log(ys + 1.0))
     sigma_val = min(raw_sigma, 0.5)
     kappa_val = 0.25
@@ -42,28 +42,36 @@ def run_cyber_risk_pipeline(csv_path):
     results = forecaster.simulate(log_particles=final_log_particles, steps=24, n_sim=2000)
     attack_paths = results["attack_paths"]
     
-    # 5. INSIKTER TILL FRONTEND/BESLUTSFATTARE
-    # Summera totala antalet attacker per simulerad bana
-    total_attacks_per_sim = np.sum(attack_paths, axis=1) 
-    
-    expected_attacks = np.mean(total_attacks_per_sim)
-    worst_case_95 = np.percentile(total_attacks_per_sim, 95)
-    worst_case_99 = np.percentile(total_attacks_per_sim, 99)
-    
+    # 5. RISK METRICS
+    total_attacks_per_sim = np.sum(attack_paths, axis=1)
+
+    expected_attacks = float(np.mean(total_attacks_per_sim))
+    worst_case_95 = float(np.percentile(total_attacks_per_sim, 95))
+    worst_case_99 = float(np.percentile(total_attacks_per_sim, 99))
+
+    critical_threshold = np.mean(ys) * 1.8
+
+    prob_escalation = float(
+        np.mean(np.max(attack_paths, axis=1) > critical_threshold)
+    )
+
     print("\n--- RESULTAT: 24H FORECAST ---")
     print(f"Förväntat antal attacker:     {expected_attacks:.0f} st")
     print(f"Worst-Case (95% konfidens):   {worst_case_95:.0f} st")
     print(f"Black Swan (99% konfidens):   {worst_case_99:.0f} st")
+    print(f"Escalation probability:       {prob_escalation:.2%}")
     print("------------------------------------")
-    
-    # Returnera datan så att en frontend (t.ex. API) kan plocka upp den
+
     return {
-    "lambda_estimates": lambda_estimates,
-    "attack_paths": attack_paths,
-    "expected_attacks": expected_attacks,
-    "worst_case_95": worst_case_95,
-    "worst_case_99": worst_case_99
-}
+        "current_lambda": float(current_lambda),
+        "lambda_estimates": lambda_estimates.tolist(),
+        "attack_paths": attack_paths.tolist(),
+        "expected_attacks": expected_attacks,
+        "worst_case_95": worst_case_95,
+        "worst_case_99": worst_case_99,
+        "prob_escalation": prob_escalation
+    }
+
 
 # Standard Python-mönster för att köra scriptet
 if __name__ == "__main__":
