@@ -57,7 +57,13 @@ def run_cyber_risk_pipeline(csv_path):
     print("------------------------------------")
     
     # Returnera datan så att en frontend (t.ex. API) kan plocka upp den
-    return lambda_estimates, attack_paths
+    return {
+    "lambda_estimates": lambda_estimates,
+    "attack_paths": attack_paths,
+    "expected_attacks": expected_attacks,
+    "worst_case_95": worst_case_95,
+    "worst_case_99": worst_case_99
+}
 
 # Standard Python-mönster för att köra scriptet
 if __name__ == "__main__":
