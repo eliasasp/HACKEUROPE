@@ -13,21 +13,21 @@ def run_backtest(ys, horizon=24, start=100):
 
     for t in range(start, len(ys) - horizon):
 
-        # 1️⃣ Fit filter on past data only
+        # 1️ Fit filter on past data only
         lambda_estimates, final_particles = cyber_particle_filter(
             ys[:t],
             npart=500,
-            kappa=0.2,      # samma som generering
+            kappa=0.2,      
             dt=1.0
         )
 
-        # 2️⃣ Forecast future
+        # 2️ Forecast future
         forecaster = ThreatForecaster(
-            kappa=0.2,
-            theta=np.log(np.mean(ys[:t]) + 1e-6),
-            sigma=0.3,      # samma som generering
-            dt=1.0
-        )
+        kappa=0.2,
+        theta=np.log(10),  
+        sigma=0.3,
+        dt=1.0
+    )
 
         results = forecaster.simulate(
             log_particles=final_particles,
@@ -37,13 +37,13 @@ def run_backtest(ys, horizon=24, start=100):
 
         attack_paths = results["attack_paths"]
 
-        # 3️⃣ Compare forecast to actual future
+        # 3️ Compare forecast to actual future
         forecast_mean = np.mean(attack_paths[:, -1])
         actual_value = ys[t + horizon - 1]
 
         errors.append((forecast_mean - actual_value) ** 2)
 
-        # 4️⃣ Coverage test
+        # 4️ Coverage test
         lower = np.percentile(attack_paths[:, -1], 5)
         upper = np.percentile(attack_paths[:, -1], 95)
 
