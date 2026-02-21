@@ -1,60 +1,50 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import os
+
+# Importera din parser och din pipeline!
 from monitor import format_attack_data
-from main import run_cyber_risk_pipeline
+from main import run_cyber_risk_pipeline  # Byt ut 'main' mot vad filen faktiskt heter
 
-def interactive_demo():
-    print("="*60)
-    print("🚀 CYBER RISK DASHBOARD - BACKEND CONTROLLER")
-    print("="*60)
-    print("Instruktioner:")
-    print("1. Starta 'python server.py' i Terminal 1.")
-    print("2. Starta 'python hacker.py' i Terminal 2.")
-    print("3. Tryck på [ENTER] här för att simulera en frontend-knapp!\n")
+app = FastAPI(title="SIG Cyber Quant API")
 
-    # VIKTIGT: Här pekar vi nu ut mappen "hack_test"
-    target_folder = "hack_test"
+# Tillåt frontenden att hämta data
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Sökvägar för live-demot
+TARGET_FOLDER = "hack_test"
+INPUT_LOG = os.path.join(TARGET_FOLDER, "attack_table.csv")
+FORMATTED_LOG = os.path.join(TARGET_FOLDER, "formatted_attacks.csv")
+
+@app.get("/api/risk-forecast")
+def get_risk_forecast():
+    # 1. Be log_parser formatera rådatan från webbservern
+    # (Använd '10s' för live-demot så det går undan!)
+    format_attack_data(input_csv=INPUT_LOG, output_csv=FORMATTED_LOG, freq='10s')
     
-    # Skapa mappen automatiskt om den mot förmodan saknas
-    if not os.path.exists(target_folder):
-        os.makedirs(target_folder)
+    # 2. Kontrollera att filen faktiskt skapades
+    if not os.path.exists(FORMATTED_LOG):
+        return {"status": "waiting", "message": "Väntar på attacker från servern..."}
 
-    # Bygg de fullständiga sökvägarna: t.ex. "hack_test/attack_table.csv"
-    input_log = os.path.join(target_folder, "attack_table.csv")
-    formatted_log = os.path.join(target_folder, "formatted_attacks.csv")
+    try:
+        # 3. KÖR DIN BEFINTLIGA PIPELINE!
+        results = run_cyber_risk_pipeline(FORMATTED_LOG)
+        
+        # Om pipelinen kraschar för att vi har för lite data än (mindre än 2 rader)
+        if results is None:
+            return {"status": "waiting", "message": "Samlar in tillräckligt med data..."}
 
-    while True:
-        cmd = input("Tryck [ENTER] för att hämta ny riskestimering (eller 'q' för att avsluta): ")
-        if cmd.lower() == 'q':
-            break
+        # 4. Skicka din dictionary direkt till Lovable/React
+        return {
+            "status": "success",
+            "data": results 
+        }
 
-        print("\n[+] Knapptryck mottaget! Parsar loggar...")
-
-        # 1. Bygg filen via log_parser
-        # Vi skickar in de nya sökvägarna med mappen inkluderad!
-        format_attack_data(input_csv=input_log, output_csv=formatted_log, freq='10s')
-
-        # 2. SÄKERHETSSPÄRR: Kontrollera om filen faktiskt skapades i hack_test
-        if not os.path.exists(formatted_log):
-            print(f"[-] Kunde inte hitta eller skapa formaterad data i {target_folder}.")
-            print("[-] Tips: Har du startat server.py och låtit hacker.py köra i några sekunder?\n")
-            continue
-
-        # 3. Kör de tunga beräkningarna
-        print("[+] Data formaterad. Kör SMC-filter och Monte Carlo...")
-        estimations = run_cyber_risk_pipeline(formatted_log)
-
-        if estimations is None:
-            print("[-] Ett fel uppstod i beräkningen. (Kanske för få inloggningsförsök än?)\n")
-            continue
-
-        # 4. Presentera resultaten
-        print("\n" + "-"*40)
-        print("📊 ESTIMERINGAR TILL FRONTEND")
-        print("-"*40)
-        print(f"Hotnivå just nu (Lambda): {estimations['current_lambda']:>7.2f}")
-        print(f"Förväntat antal attacker: {estimations['expected_attacks']:>7.0f}")
-        print(f"Worst-Case (95% VaR):     {estimations['worst_case']:>7.0f}")
-        print("-"*40 + "\n")
-
-if __name__ == "__main__":
-    interactive_demo()
+    except Exception as e:
+        return {"status": "error", "message": f"Kritiskt fel i pipelinen: {str(e)}"}
