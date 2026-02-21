@@ -1,20 +1,47 @@
+import numpy as np
+from model import log_ou_transition, log_to_intensity
 
-def anti_thetic_sampling(f, n_samples):
-    X = np.random.uniform(0, 1, n_samples)
-    X_hat = 1-X
-    temp_list = []
-    for i, (lam, k) in enumerate(params.T):
-        v = weibull_inverse(k, lam, X)
-        v_hat = weibull_inverse(k, lam, X_hat)
 
-        y = f(v)
-        y_hat = f(v_hat)
-        pair_values = 0.5 * (y + y_hat)
-        mu = np.mean(pair_values)
-        sem = np.std(pair_values, ddof=1) / np.sqrt(n_samples)
-        ci_lower, ci_upper = stats.norm.interval(0.95, loc=mu, scale=sem)
-        temp_list.append([ci_lower, ci_upper])
-        print(f"Mean power (Antithetic): {mu:.2f}, 95% CI: [{ci_lower:.2f}, {ci_upper:.2f}]")
-    return temp_list
+class ThreatForecaster:
 
-confidence_levels_methods.append(anti_thetic_sampling(power_curve, n_samples))
+    def __init__(self, kappa, theta, sigma, dt):
+        self.kappa = kappa
+        self.theta = theta
+        self.sigma = sigma
+        self.dt = dt
+
+    def simulate(
+        self,
+        lambda_estimates,
+        steps=24,
+        n_sim=2000
+    ):
+        """
+        Run forward Monte Carlo simulation.
+        """
+
+        # Sample initial log-intensity
+        x = np.random.choice(lambda_estimates, size=n_sim)
+
+        lambda_paths = np.zeros((n_sim, steps))
+        attack_paths = np.zeros((n_sim, steps))
+
+        for t in range(steps):
+
+            x = log_ou_transition(
+                x,
+                self.kappa,
+                self.theta,
+                self.sigma,
+                self.dt
+            )
+
+            lambda_t = log_to_intensity(x)
+
+            lambda_paths[:, t] = lambda_t
+            attack_paths[:, t] = np.random.poisson(lambda_t)
+
+        return {
+            "lambda_paths": lambda_paths,
+            "attack_paths": attack_paths
+        }
