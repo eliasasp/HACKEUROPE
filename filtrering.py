@@ -1,5 +1,9 @@
 import numpy as np
 from scipy.stats import poisson
+import pandas as pd
+
+df = pd.read_csv('synthetic_ai_attack_timeseries.csv')
+ys = df['attack_count'].values
 
 def cyber_particle_filter(ys, npart, drift_std=0.1):
     """
@@ -46,3 +50,6 @@ def cyber_particle_filter(ys, npart, drift_std=0.1):
         lambda_estimates[i] = np.mean(lam)
         
     return lambda_estimates
+
+lambda_estimates = cyber_particle_filter(ys, npart=1000, drift_std=0.1)
+print(lambda_estimates)
