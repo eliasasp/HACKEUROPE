@@ -1,6 +1,6 @@
 def anti_thetic_sampling(f, n_samples):
     X = np.random.uniform(0, 1, n_samples)
-    X_hat = 1-X
+    X_ha t = 1-X
     temp_list = []
     for i, (lam, k) in enumerate(params.T):
         v = weibull_inverse(k, lam, X)
