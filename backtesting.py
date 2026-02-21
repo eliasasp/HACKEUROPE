@@ -16,7 +16,7 @@ def pro_backtest(ys, train_size=200, horizon=1):
 
     train_data = ys[:train_size]
 
-    kappa = 0.1   # tune this later if needed
+    kappa = 0.05   # tune this later if needed
     theta_log = np.log(np.mean(train_data) + 1e-6)
     sigma = max(np.std(np.log(train_data + 1e-5)), 0.1)
 
@@ -35,7 +35,7 @@ def pro_backtest(ys, train_size=200, horizon=1):
     actuals = []
     naive_forecasts = []
 
-    for t in range(train_size, train_size + 500):
+    for t in range(train_size, train_size + 300):
 
         # Filtering using past data only
         _, final_particles = cyber_particle_filter(
@@ -56,7 +56,7 @@ def pro_backtest(ys, train_size=200, horizon=1):
         results = forecaster.simulate(
             log_particles=final_particles,
             steps=horizon,
-            n_sim=500
+            n_sim=1000
         )
 
         attack_paths = results["attack_paths"]
@@ -122,6 +122,6 @@ def pro_backtest(ys, train_size=200, horizon=1):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv("formatted_minutely.csv")
+    df = pd.read_csv("formatted_hourly.csv")
     ys = df["attack_count"].values
     pro_backtest(ys, train_size=200, horizon=1)
