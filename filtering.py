@@ -4,7 +4,8 @@ import pandas as pd
 from model import log_ou_transition, log_to_intensity, poisson_likelihood
 
 df = pd.read_csv('synthetic_ai_attack_timeseries.csv')
-ys = df['attack_count'].values
+# Hämta bara de senaste 720 timmarna (30 dagar) för snabb och relevant analys
+ys = df['attack_count'].tail(720).values
 
 def cyber_particle_filter(ys, npart, kappa = 0.25, dt = 1.0):
     """
@@ -61,8 +62,11 @@ def cyber_particle_filter(ys, npart, kappa = 0.25, dt = 1.0):
 
 def test_filtering():
     npart = 500
-    kappa = 0.25 #motivera mer sen- mean reversion speed (hur fort vi återgår till det normala värdet efter en attackvåg)
-    lambda_estimates, x_particle = cyber_particle_filter(ys, npart, kappa, dt = 1.0)
-    print(lambda_estimates)
+    kappa = 0.25 
+    lambda_estimates, final_x_particles = cyber_particle_filter(ys, npart, kappa, dt=1.0)
+    
+    print(f"Genomsnittlig hotnivå historiskt: {np.mean(ys):.2f}")
+    print(f"Filtrets estimerade hotnivå JUST NU: {lambda_estimates[-1]:.2f}")
+    print(f"Antal partiklar redo för Monte Carlo: {len(final_x_particles)}")
 
 test_filtering()
