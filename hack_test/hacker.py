@@ -4,7 +4,7 @@ import random
 
 # --- INSTÄLLNINGAR ---
 TARGET_URL = "http://127.0.0.1:5000/login"
-LAMBDA = 150  # Snitt på 15 inloggningsförsök per minut
+LAMBDA = 15  # Snitt på 15 inloggningsförsök per minut
 ATTACK_DURATION_MINUTES = 5  # Hur länge scriptet ska köra
 
 # Listor med fiktiva uppgifter för att göra loggen realistisk
