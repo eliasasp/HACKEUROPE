@@ -18,7 +18,8 @@ def run_cyber_risk_pipeline(csv_path):
     
     # 2. DATADRIVEN KALIBRERING (Låter datan styra parametrarna)
     theta_val = np.mean(ys)
-    sigma_val = max(np.std(np.log(ys + 1e-5)), 0.1)
+    raw_sigma = np.std(np.log(ys + 1.0))
+    sigma_val = min(raw_sigma, 0.5)
     kappa_val = 0.25
     n_particles = 500
     
