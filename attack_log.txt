@@ -1,0 +1,4 @@
+[2026-02-21 18:08:57] Inloggningsförsök från 127.0.0.1 - Användare: 
+[2026-02-21 18:09:06] Inloggningsförsök från 127.0.0.1 - Användare: 
+[2026-02-21 18:09:20] Inloggningsförsök från 127.0.0.1 - Användare: d
+[2026-02-21 18:09:25] Inloggningsförsök från 127.0.0.1 - Användare: d
