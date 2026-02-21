@@ -8,16 +8,14 @@ df = pd.read_csv('synthetic_ai_attack_timeseries.csv')
 ys = df['attack_count'].tail(720).values
 
 def cyber_particle_filter(ys, npart, kappa = 0.25, dt = 1.0):
-    """
-    ys: Array med faktiska antalet attacker/alerts per tidssteg (t.ex. per timme)
-    npart: Antal partiklar (t.ex. 500 eller 1000)
-    drift_std: Hur mycket vi tillåter den dolda hotnivån att ändras per tidssteg
-    """
     n = len(ys)
     lambda_estimates = np.zeros(n)
-    theta_log = np.log(np.mean(ys))
-    sigma = max(np.std(np.log(ys + 1e-5)), 0.1)
     
+    # SÄKERHETSSPÄRR: Säkerställ att snittet (theta) aldrig är exakt 0 innan vi logaritmerar
+    safe_mean = max(np.mean(ys), 0.1)
+    theta_log = np.log(safe_mean)
+    
+    sigma = max(np.std(np.log(ys + 1.0)), 0.1) # Ändrade 1e-5 till 1.0 för stabilitet
     # 1. INITIALISERING
     # Istället för C och D från labben, gissar vi en start-intensitet (lambda).
     # Lambda måste vara > 0.
@@ -69,4 +67,18 @@ def test_filtering():
     print(f"Filtrets estimerade hotnivå JUST NU: {lambda_estimates[-1]:.2f}")
     print(f"Antal partiklar redo för Monte Carlo: {len(final_x_particles)}")
 
-test_filtering()
+# Längst ner i filtering.py
+if __name__ == "__main__":
+    df = pd.read_csv('synthetic_ai_attack_timeseries.csv')
+    ys = df['attack_count'].tail(720).values
+    
+    def test_filtering():
+        npart = 500
+        kappa = 0.25 
+        lambda_estimates, final_x_particles = cyber_particle_filter(ys, npart, kappa, dt=1.0)
+        
+        print(f"Genomsnittlig hotnivå historiskt: {np.mean(ys):.2f}")
+        print(f"Filtrets estimerade hotnivå JUST NU: {lambda_estimates[-1]:.2f}")
+        print(f"Antal partiklar redo för Monte Carlo: {len(final_x_particles)}")
+
+    test_filtering()

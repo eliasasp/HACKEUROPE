@@ -7,23 +7,47 @@ def format_attack_data(input_csv="attack_table.csv", output_csv="hourly_attacks.
     grupperar dem enligt angiven frekvens, och sparar i en ny CSV-fil.
     Returnerar inget.
     """
-    print(f"[*] Läser in rådata från {input_csv}...")
     
+    # --- 1. SÄKERHETSSPÄRR OM FILEN SAKNAS ---
     if not os.path.exists(input_csv):
-        print(f"[!] Hittade inte {input_csv}.")
+        print(f"[!] Hittade inte {input_csv}. Skapar en tom mall.")
+        pd.DataFrame(columns=['timestamp', 'attack_count']).to_csv(output_csv, index=False)
         return
 
-    df = pd.read_csv(input_csv)
-    
+    # --- 2. LÄS IN FILEN (Hantera om den är helt tom) ---
+    try:
+        # Vi säger åt Pandas att det inte finns någon rubrikrad (header=None), 
+# och tvingar sedan namnen på kolumnerna manuellt.
+        df = pd.read_csv(input_csv, header=None, names=['timestamp', 'ip', 'user', 'password', 'status'])
+    except pd.errors.EmptyDataError:
+        print("[!] CSV-filen är helt tom. Skapar en tom mall.")
+        pd.DataFrame(columns=['timestamp', 'attack_count']).to_csv(output_csv, index=False)
+        return
+        
     if len(df) == 0:
-        print("[!] CSV-filen är tom.")
+        print("[!] CSV-filen saknar rader. Skapar en tom mall.")
+        pd.DataFrame(columns=['timestamp', 'attack_count']).to_csv(output_csv, index=False)
         return
 
-    if 'Status' in df.columns:
-        df = df[df['Status'] == 'FAILED'].copy()
+    # --- 3. IDIOTSÄKER KOLUMN-FORMATERING ---
+    # Gör alla kolumnnamn till små bokstäver och ta bort mellanslag. 
+    # Fixar KeyError direkt!
+    df.columns = df.columns.str.strip().str.lower()
 
-    df['Timestamp'] = pd.to_datetime(df['Timestamp'])
-    df.set_index('Timestamp', inplace=True)
+    # --- 4. FILTRERA PÅ FAILED ---
+    if 'status' in df.columns:
+        # Gör 'FAILED' till stora bokstäver i kollen, oavsett hur det loggades
+        df = df[df['status'].astype(str).str.upper() == 'FAILED'].copy()
+
+    if len(df) == 0:
+        print("[!] Inga 'FAILED'-attacker hittades än. Skapar en tom mall.")
+        pd.DataFrame(columns=['timestamp', 'attack_count']).to_csv(output_csv, index=False)
+        return
+
+    # --- 5. FORMATERA OCH GRUPPERA (Resample) ---
+    # Nu VET vi att kolumnen heter 'timestamp' med litet t
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+    df.set_index('timestamp', inplace=True)
     
     counts = df.resample(freq).size().fillna(0).astype(int)
     
