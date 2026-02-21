@@ -7,7 +7,8 @@ class ThreatForecaster:
         self.kappa = kappa
         # Konvertera jämviktsläget (theta) till log-skala redan här, 
         # eftersom OU-ekvationen förväntar sig det!
-        self.theta_log = np.log(theta)
+        safe_theta = max(theta, 0.1)
+        self.theta_log = np.log(safe_theta)
         self.sigma = sigma
         self.dt = dt
 
