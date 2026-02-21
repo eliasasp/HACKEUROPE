@@ -6,7 +6,7 @@ from model import log_ou_transition, log_to_intensity, poisson_likelihood
 df = pd.read_csv('synthetic_ai_attack_timeseries.csv')
 ys = df['attack_count'].values
 
-def cyber_particle_filter(ys, npart, kappa, theta, sigma, dt = 1.0):
+def cyber_particle_filter(ys, npart, kappa = 0.25, dt = 1.0):
     """
     ys: Array med faktiska antalet attacker/alerts per tidssteg (t.ex. per timme)
     npart: Antal partiklar (t.ex. 500 eller 1000)
@@ -14,7 +14,8 @@ def cyber_particle_filter(ys, npart, kappa, theta, sigma, dt = 1.0):
     """
     n = len(ys)
     lambda_estimates = np.zeros(n)
-    theta_log = np.log(theta)  # OU processen vill ha log
+    theta_log = np.log(np.mean(ys))
+    sigma = max(np.std(np.log(ys + 1e-5)), 0.1)
     
     # 1. INITIALISERING
     # Istället för C och D från labben, gissar vi en start-intensitet (lambda).
@@ -54,16 +55,14 @@ def cyber_particle_filter(ys, npart, kappa, theta, sigma, dt = 1.0):
         # Convert to real intensity and not log(intensity)
         resampled_lam = log_to_intensity(x_particle)
         lambda_estimates[i] = np.mean(resampled_lam)
+        #transformera till log!!
         
-    return lambda_estimates
+    return lambda_estimates, x_particle
 
 def test_filtering():
     npart = 500
     kappa = 0.25 #motivera mer sen- mean reversion speed (hur fort vi återgår till det normala värdet efter en attackvåg)
-    theta_val = df['attack_count'].mean()  #long term mean
-    sigma = max(np.log(df['attack_count'] + 1).diff().std(), 0.1) #volatility  which has a failsafe of 0.1 to prevent it from being too low and causing numerical issues
-    
-    lambda_estimates = cyber_particle_filter(ys, npart, kappa, theta_val, sigma, dt = 1.0)
+    lambda_estimates, x_particle = cyber_particle_filter(ys, npart, kappa, dt = 1.0)
     print(lambda_estimates)
 
 test_filtering()
