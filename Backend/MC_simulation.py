@@ -5,8 +5,6 @@ class ThreatForecaster:
 
     def __init__(self, kappa, theta, sigma, dt=1.0):
         self.kappa = kappa
-        # Konvertera jämviktsläget (theta) till log-skala redan här, 
-        # eftersom OU-ekvationen förväntar sig det!
         safe_theta = max(theta, 0.1)
         self.theta_log = np.log(safe_theta)
         self.sigma = sigma
@@ -14,11 +12,10 @@ class ThreatForecaster:
 
     def simulate(self, log_particles, steps=24, n_sim=2000):
         """
-        Kör framåt-simulering (Monte Carlo) av cyberattacker.
-        log_particles: Array med den sista svärmen av log-intensiteter från filtret.
+        RUN  (Monte Carlo) of cyber attacks
+         - log_particles: Log-lambda particle
         """
 
-        # 1. Startpunkter: Vi drar start-tillstånd från partikelfiltrets osäkerhet
         x = np.random.choice(log_particles, size=n_sim)
 
         # Matriser för att spara hela tidslinjen (n_sim rader, steps kolumner)
