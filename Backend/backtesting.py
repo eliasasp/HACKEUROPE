@@ -113,9 +113,9 @@ def pro_backtest(ys, train_size=200, horizon=1):
                      alpha=0.3, label="95% Interval")
 
     plt.legend()
-    plt.title("Professional Backtest: Model vs Naive")
+    plt.title("Backtest: Model vs Naive")
     plt.xlabel("Time (Test Period)")
-    plt.ylabel("Failed Logins")
+    plt.ylabel("Hack Attempts")
     plt.show()
 
     print("=== BACKTEST COMPLETE ===")
