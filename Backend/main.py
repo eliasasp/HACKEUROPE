@@ -8,7 +8,6 @@ def run_cyber_risk_pipeline(csv_path):
     df = pd.read_csv(csv_path)
 
     # --- LÖSNING PÅ RIGHT-EDGE PROBLEMET ---
-    # Vi ignorerar alltid den absolut sista stapeln, eftersom det 
     # 10-sekundersfönstret fortfarande håller på att fyllas i realtid.
     if len(df) > 1:
         df = df.iloc[:-1] 
@@ -31,7 +30,7 @@ def run_cyber_risk_pipeline(csv_path):
         print("[!] Filen är tom. Väntar på inkommande data från hacker.py...")
         return {
             "current_lambda": 0.0,
-            "chart_data": [],           # <-- RÄTTAD! Nu matchar den botten!
+            "chart_data": [],        
             "expected_attacks": 0.0,
             "worst_case_95": 0.0,
             "prob_escalation": 0.0,
