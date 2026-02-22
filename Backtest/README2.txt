@@ -1,0 +1,1 @@
+For this hackathon we put the backtesting files in the backend directory for simplicity. In a production environment, you would want to separate the backtesting code into its own module or service.

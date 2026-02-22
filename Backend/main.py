@@ -7,27 +7,25 @@ def run_cyber_risk_pipeline(csv_path):
     print(f"Laddar data från {csv_path}...")
     df = pd.read_csv(csv_path)
 
-    # --- LÖSNING PÅ RIGHT-EDGE PROBLEMET ---
-    # 10-sekundersfönstret fortfarande håller på att fyllas i realtid.
+    # --- Solution for RIGHT-EDGE PROBLEM ---
+    # 10-sec window still is filling up, so we drop the last row if not full.
     if len(df) > 1:
         df = df.iloc[:-1] 
     # ---------------------------------------
 
-    # --- Rullande 10-minutersfönster ---
+    # --- Rolling 10-minut window ---
     recent_10_df = df.tail(10)
     if len(recent_10_df) > 0:
-        recent_10_data = recent_10_df[['timestamp', 'attack_count']].to_dict(orient='records')
         recent_10_avg = float(recent_10_df['attack_count'].mean())
     else:
-        recent_10_data = []
         recent_10_avg = 0.0
     
-    # Använd rullande fönster (senaste 30 dagarna) för snabbhet och relevans
+    # Use rolling window for (last 30 days) for spped och relevance
     ys = df['attack_count'].tail(720).values
 
-    # --- SAFETY CATCH (om filen är tom vid uppstart) ---
+    # --- SAFETY CATCH (if filen is empty at start) ---
     if len(ys) == 0:
-        print("[!] Filen är tom. Väntar på inkommande data från hacker.py...")
+        print("[!] file is empty, returning default values...")
         return {
             "current_lambda": 0.0,
             "chart_data": [],        

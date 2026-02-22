@@ -5,11 +5,11 @@ import pandas as pd
 
 # Importera din parser och din pipeline!
 from monitor import format_attack_data
-from main import run_cyber_risk_pipeline  # Byt ut 'main' mot vad filen faktiskt heter
+from main import run_cyber_risk_pipeline
 
 app = FastAPI(title="SIG Cyber Quant API")
 
-# Tillåt frontenden att hämta data
+# Allow frontend to access this API from any origin (for demo purposes)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -18,32 +18,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Sökvägar för live-demot
+# path for live-demot
 TARGET_FOLDER = "hack_test"
 INPUT_LOG = os.path.join(TARGET_FOLDER, "attack_table.csv")
 FORMATTED_LOG = os.path.join(TARGET_FOLDER, "formatted_attacks.csv")
 
 @app.get("/api/risk-forecast")
 def get_risk_forecast():
-    # 1. Parsa rådatan (10s för demo)
+    # 1. Parse  (10s for demo)
     format_attack_data(input_csv=INPUT_LOG, output_csv=FORMATTED_LOG, freq='10s')
     
     if not os.path.exists(FORMATTED_LOG):
         return {"status": "waiting", "message": "Väntar på attacker..."}
 
     try:
-        # 2. Kör din pipeline
-        # 'results' innehåller nu: lambda_history, recent_10_data, expected_attacks, etc.
+        # 2. Run pipeline
+        # 'results' contain: lambda_history, recent_10_data, expected_attacks, etc.
         results = run_cyber_risk_pipeline(FORMATTED_LOG)
         
         if results is None:
             return {"status": "waiting", "message": "Samlar data..."}
 
-        # 3. Skicka tillbaka hela paketet direkt!
-        # Vi lägger bara till en status-nyckel för säkerhets skull.
         results["status"] = "success"
         return results
-
 
     except Exception as e:
         return {"status": "error", "message": str(e)}

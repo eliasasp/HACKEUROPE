@@ -8,7 +8,7 @@ from MC_simulation import ThreatForecaster
 
 def pro_backtest(ys, train_size=200, horizon=1):
 
-    print("=== PROFESSIONAL BACKTEST START ===")
+    print("=== BACKTEST START ===")
 
     # ----------------------------
     # 1️ TRAIN / PARAMETER FIT
